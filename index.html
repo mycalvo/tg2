@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="application/vnd.apple.mpegurl; charset=utf-8">
+    <title>forex52redi</title>
+    <script>
+        // URL original de la API
+        const URLorigi = 'https://fx-24.xyz/mychannel/public/api/infos';
+        
+        // Usamos un proxy CORS para evitar problemas de CORS
+        // Este proxy permite hacer peticiones a servidores que no permiten CORS
+        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+
+        async function obtenerDatosDeServidor() {
+            try {
+                // Mostramos un mensaje de carga
+                console.log('Obteniendo datos del servidor...');
+                
+                // Hacemos la petición a través del proxy
+                const response = await fetch(proxyUrl + encodeURIComponent(URLorigi), { 
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                
+                const texto = await response.text();
+                console.log('Datos recibidos, procesando...');
+                procesarTextoForex(texto);
+            } catch (error) {
+                console.error('Error al obtener los datos:', error);
+                document.body.innerHTML = '<p style="color: red; font-family: Arial; padding: 20px;">Error al conectar con el servidor. Por favor, intenta de nuevo más tarde.</p>';
+            }
+        }
+
+        function procesarTextoForex(textoForex) {
+            let buscUrl = "", buscUsernam = "", buscPassw = "", err = "fail";
+
+            // Verificamos que el texto contiene los datos esperados
+            if (textoForex.includes("username\":\"") && 
+                textoForex.includes(",http:\\/\\/") && 
+                textoForex.includes("password\":\"") && 
+                textoForex.includes("\",\"created_at")) {
+                
+                // Extraemos la URL base
+                const desdeHttpIndex = textoForex.indexOf("http:\\/\\/");
+                const buscDesdeHttp = textoForex.substring(desdeHttpIndex + 9);
+                
+                if (buscDesdeHttp.includes(",") && buscDesdeHttp.includes("\",\"")) {
+                    // Extraemos el nombre de usuario
+                    const usernameIndex = textoForex.indexOf("username\":\"");
+                    buscUsernam = textoForex.substring(usernameIndex + 11, textoForex.indexOf(",http:"));
+                    
+                    // Extraemos la contraseña
+                    const passwordIndex = textoForex.indexOf("password\":\"");
+                    buscPassw = textoForex.substring(passwordIndex + 11, textoForex.indexOf("\",\"created_at"));
+                    
+                    // Construimos la URL base
+                    buscUrl = "http://" + buscDesdeHttp.substring(0, buscDesdeHttp.indexOf(","));
+                    
+                    err = "ok";
+                }
+            }
+
+            if (err === "ok") {
+                // Construimos la URL final directamente en el navegador
+                // Esta es la URL del archivo M3U que queremos descargar
+                const finalUrl = `${buscUrl}/get.php?username=${encodeURIComponent(buscUsernam)}&password=${encodeURIComponent(buscPassw)}&type=m3u_plus`;
+                
+                console.log('Redirigiendo a la URL final...');
+                
+                // Redirigimos directamente a la URL final
+                window.location.href = finalUrl;
+            } else {
+                console.error("Error en el procesamiento de datos");
+                document.body.innerHTML = '<p style="color: orange; font-family: Arial; padding: 20px;">No se pudieron procesar los datos correctamente. Verifica la fuente de datos.</p>';
+            }
+        }
+
+        // Iniciamos el proceso cuando la página termina de cargar
+        document.addEventListener('DOMContentLoaded', obtenerDatosDeServidor);
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .loader {
+            text-align: center;
+            color: white;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <p>Cargando datos...</p>
+    </div>
+</body>
+</html>
